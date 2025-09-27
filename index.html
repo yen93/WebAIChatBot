@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAIChatBot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #inputBox {
+            height: 100px; /* Make the input box multi-line for JSON */
+        }
+        #displayBox {
+            height: 200px; /* Larger box for the response */
+            background-color: #f4f4f4;
+            color: #333;
+            overflow: auto; /* Allow scrolling */
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .container {
+        display: flex; /* This turns on Flexbox for the container */
+        justify-content: space-between; /* Distributes space between the items */
+        gap: 20px; /* Adds space between the boxes */
+        }
+
+
+        #data-display {
+            margin-top: 20px;
+            /* Set a fixed height so the content can exceed it */
+            height: 400px; /* Adjust this height as needed */
+            
+            /* The key property: enables vertical scrolling when content overflows */
+            overflow-y: auto; 
+            
+            /* Optional: Add padding/border for visual separation */
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .box {
+            display: flex; /* Activate flexbox */
+            flex-direction: column; /* Stack items vertically */
+            min-height: 90vh; /* Make sure the container fills the viewport height */
+            margin: 0; /* Remove default body margin */
+            width: 50%; /* Each box takes up 50% of the container's width */
+            border: 1px solid black;
+            padding: 20px;
+            box-sizing: border-box; /* This ensures the padding and border are included in the 50% width */
+        }
+        .bottomStyle {
+            /* This is the key: it consumes all available vertical space above it, 
+            pushing the element to the bottom. */
+            margin-top: auto; 
+            
+            /* Optional: Styling for the content inside */
+            width: 100%;
+            padding: 10px;
+            background-color: #f0f0f0; 
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="box">
+            <h1>Company KB Chatbot</h1>
+
+            <p>Hi! How may I help you today?:</p>
+            <textarea id="inputBox" placeholder='Enter your message here.'></textarea>
+
+            <button onclick="sendRequest()">Send</button>
+
+            <hr>
+
+            <div class="bottomStyle">
+                <p>AI Assistant Response:</p>
+                <textarea id="displayBox" readonly placeholder="Response will appear here..."></textarea>
+            </div>
+        </div>
+        <div class="box">
+            <h1>Knowledge Base</h1>
+            <div id="data-display">
+                    Loading data...
+            </div>    
+            <div class="bottomStyle">
+                    <textarea id="KBinputBox" placeholder='Enter your KB info here.'></textarea>
+                    <button onclick="AddToKnowledgeBase()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    
+
+    
+
+    <script>
+        const API_URL = "https://fqsapi.onrender.com/FireBaseFQS/GetChatResponse";
+        /**
+         * Sends the JSON from the input box as a POST request and displays the raw response.
+         */
+        async function sendRequest() {
+            const inputBox = document.getElementById('inputBox');
+            const displayBox = document.getElementById('displayBox');
+            const requestBody = inputBox.value.trim();
+            const jsonString = JSON.stringify(requestBody);
+
+            // Simple validation
+            if (!requestBody) {
+                displayBox.value = "Error: Input box is empty. Please enter a JSON raw string.";
+                return;
+            }
+
+            // Clear previous output and show loading message
+            displayBox.value = "Sending request...";
+
+            try {
+                // Check if the input is valid JSON before sending
+                JSON.parse(jsonString);
+            } catch (e) {
+                displayBox.value = `Error: Please make sure your message is not empty before sending. (Details: ${e.message})`;
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // Note: Depending on the API, other headers (like Authorization) might be needed.
+                    },
+                    body: jsonString
+                });
+
+                // Get the raw text of the response
+                const responseText = await response.text();
+                
+                // Display the raw text response
+                displayBox.value = responseText;
+
+                // Optional: Provide status code information
+                if (!response.ok) {
+                    displayBox.value = `HTTP Error ${response.status} (${response.statusText}):\n\n${responseText}`;
+                }
+
+            } catch (error) {
+                // Handle network errors (e.g., disconnected, CORS issues)
+                displayBox.value = `Network or Fetch Error: ${error.message}. Check the console for more details.`;
+                console.error("Fetch failed:", error);
+            }
+        }
+    
+        const API_AddToKnowledgeBase = "https://fqsapi.onrender.com/FireBaseFQS/AddToKnowledgeBase";
+        /**
+         * Sends the JSON from the input box as a POST request and displays the raw response.
+         */
+        async function AddToKnowledgeBase() {
+            const inputBox = document.getElementById('KBinputBox');
+            const requestBody = inputBox.value.trim();
+            const jsonString = JSON.stringify(requestBody);
+
+            // Simple validation
+            if (!jsonString) {
+                KBinputBox.value = "Error: Input box is empty. Please enter a JSON raw string.";
+                return;
+            }
+
+            // Clear previous output and show loading message
+            KBinputBox.value = "Sending request...";
+
+            try {
+                // Check if the input is valid JSON before sending
+                JSON.parse(jsonString);
+            } catch (e) {
+                displayBox.value = `Error: Please make sure your string is not empty before sending. (Details: ${e.message})`;
+                return;
+            }
+
+            try {
+                const response = await fetch(API_AddToKnowledgeBase, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // Note: Depending on the API, other headers (like Authorization) might be needed.
+                    },
+                    body: jsonString
+                });
+
+                // Get the raw text of the response
+                const responseText = await response.text();
+                
+                // Display the raw text response
+                KBinputBox.value = responseText;
+
+                // SUCCESS - Refresh the page after a short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1000); // 1 second delay to show success message
+
+                // Optional: Provide status code information
+                if (!response.ok) {
+                    KBinputBox.value = `HTTP Error ${response.status} (${response.statusText}):\n\n${responseText}`;
+                }
+
+            } catch (error) {
+                // Handle network errors (e.g., disconnected, CORS issues)
+                KBinputBox.value = `Network or Fetch Error: ${error.message}. Check the console for more details.`;
+                console.error("Fetch failed:", error);
+            }
+        }
+    
+
+        const API_GetKnowledgeBaseL = "https://fqsapi.onrender.com/FireBaseFQS/GetKnowledgeBase";
+        const DATA_CONTAINER = document.getElementById('data-display');
+        async function fetchAndDisplayData() {
+            try {
+                // 1. Fetch the data with a POST request (even with an empty body)
+                const response = await fetch(API_GetKnowledgeBaseL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // The POST request requires a body, even if it's empty JSON
+                    body: JSON.stringify({}) 
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // 2. Parse the JSON response
+                const data = await response.json(); 
+
+                // 3. Render the data
+                renderTable(data);
+
+            } catch (error) {
+                console.error("Error fetching or rendering data:", error);
+                DATA_CONTAINER.innerHTML = `Error loading data: ${error.message}`;
+            }
+        }
+        /**
+         * Converts the JSON array into an HTML table and inserts it into the container.
+         * @param {Array<Object>} data - The array of knowledge base objects.
+         */
+        function renderTable(data) {
+            if (!data || data.length === 0) {
+                DATA_CONTAINER.innerHTML = "<p>No knowledge base entries found.</p>";
+                return;
+            }
+
+            // Start building the HTML table string
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Information</th>
+                            <th>Date Added</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // Iterate over the data array and build a row for each item
+            data.forEach(item => {
+                // Optional: Format the date string for better readability
+                const formattedDate = new Date(item.DateAdded).toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric'
+                });
+
+                tableHTML += `
+                    <tr>
+                        <td>${item.ID}</td>
+                        <td>${item.Info}</td>
+                        <td>${formattedDate}</td>
+                    </tr>
+                `;
+            });
+
+            // Close the table
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            // Insert the complete table HTML into the container
+            DATA_CONTAINER.innerHTML = tableHTML;
+        }
+
+        // 4. Run the function when the page is loaded
+        window.onload = fetchAndDisplayData; 
+    
+    </script>
+
+</body>
+</html>
