@@ -90,6 +90,27 @@
             background-color: #f0f0f0; 
             box-sizing: border-box;
         }
+
+
+        /* ---------------------------------- */
+        /* 2. MEDIA QUERY (PHONE VIEW)        */
+        /* ---------------------------------- */
+        /* Styles applied when the screen width is 600px or less */
+        @media (max-width: 600px) {
+            
+            .container {
+                /* KEY CHANGE: Switch the direction to column, stacking them vertically */
+                flex-direction: column; 
+            }
+
+            .box {
+                /* Now that they are stacked, they should fill the full width */
+                flex: none; /* Reset flex property */
+                width: 100%; /* Ensure they take full width */
+                margin-bottom: 10px; /* Add some space between the stacked boxes */
+            }
+        }
+</style>
     </style>
 </head>
 <body>
